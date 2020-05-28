@@ -167,5 +167,21 @@
     <orderEntry type="library" name="cryptonite-0.26" level="project" />
     <orderEntry type="library" name="hourglass-0.2.12" level="project" />
     <orderEntry type="library" name="pem-0.2.4" level="project" />
+    <orderEntry type="library" name="servant-server-0.16.2" level="project" />
+    <orderEntry type="library" name="resourcet-1.2.4" level="project" />
+    <orderEntry type="library" name="wai-app-static-3.1.7.1" level="project" />
+    <orderEntry type="library" name="unliftio-core-0.1.2.0" level="project" />
+    <orderEntry type="library" name="blaze-html-0.9.1.2" level="project" />
+    <orderEntry type="library" name="blaze-markup-0.8.2.5" level="project" />
+    <orderEntry type="library" name="file-embed-0.0.12.0" level="project" />
+    <orderEntry type="library" name="old-locale-1.0.0.7" level="project" />
+    <orderEntry type="library" name="optparse-applicative-0.15.1.0" level="project" />
+    <orderEntry type="library" name="wai-extra-3.0.29.1" level="project" />
+    <orderEntry type="library" name="ansi-wl-pprint-0.6.9" level="project" />
+    <orderEntry type="library" name="fast-logger-3.0.1" level="project" />
+    <orderEntry type="library" name="wai-logger-2.3.6" level="project" />
+    <orderEntry type="library" name="easy-file-0.2.2" level="project" />
+    <orderEntry type="library" name="unix-time-0.4.7" level="project" />
+    <orderEntry type="library" name="old-time-1.1.0.3" level="project" />
   </component>
 </module>
