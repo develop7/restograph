@@ -50,6 +50,8 @@ executable restograph-exe
     , bytestring
     , postgresql-libpq
     , text
+    , wai
+    , wai-extra
     , warp
   default-language: Haskell2010
 
