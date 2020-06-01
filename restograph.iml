@@ -191,5 +191,21 @@
     <orderEntry type="library" name="reflection-2.1.5" level="project" />
     <orderEntry type="library" name="type-equality-1" level="project" />
     <orderEntry type="library" name="deriving-aeson-0.2.5" level="project" />
+    <orderEntry type="library" name="servant-swagger-1.1.7.1" level="project" />
+    <orderEntry type="library" name="servant-swagger-ui-0.3.4.3.23.11" level="project" />
+    <orderEntry type="library" name="swagger2-2.5" level="project" />
+    <orderEntry type="library" name="insert-ordered-containers-0.2.3.1" level="project" />
+    <orderEntry type="library" name="file-embed-lzma-0" level="project" />
+    <orderEntry type="library" name="servant-swagger-ui-core-0.3.3" level="project" />
+    <orderEntry type="library" name="generics-sop-0.5.1.0" level="project" />
+    <orderEntry type="library" name="optics-core-0.2" level="project" />
+    <orderEntry type="library" name="optics-th-0.2" level="project" />
+    <orderEntry type="library" name="optics-extra-0.2" level="project" />
+    <orderEntry type="library" name="lzma-0.0.0.3" level="project" />
+    <orderEntry type="library" name="th-lift-instances-0.1.16" level="project" />
+    <orderEntry type="library" name="servant-blaze-0.9" level="project" />
+    <orderEntry type="library" name="sop-core-0.5.0.1" level="project" />
+    <orderEntry type="library" name="indexed-profunctors-0.1" level="project" />
+    <orderEntry type="library" name="th-lift-0.8.1" level="project" />
   </component>
 </module>

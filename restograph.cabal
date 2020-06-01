@@ -31,10 +31,14 @@ library
     , aeson
     , deriving-aeson
     , hasql
+    , lens
     , postgresql-libpq
     , servant
-    , servant-server
     , servant-docs
+    , servant-server
+    , servant-swagger
+    , servant-swagger-ui
+    , swagger2
     , text
     , wai
   default-language: Haskell2010
