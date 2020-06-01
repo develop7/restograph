@@ -183,5 +183,13 @@
     <orderEntry type="library" name="easy-file-0.2.2" level="project" />
     <orderEntry type="library" name="unix-time-0.4.7" level="project" />
     <orderEntry type="library" name="old-time-1.1.0.3" level="project" />
+    <orderEntry type="library" name="servant-docs-0.11.4" level="project" />
+    <orderEntry type="library" name="aeson-pretty-0.8.8" level="project" />
+    <orderEntry type="library" name="lens-4.18.1" level="project" />
+    <orderEntry type="library" name="universe-base-1.1.1" level="project" />
+    <orderEntry type="library" name="parallel-3.2.2.0" level="project" />
+    <orderEntry type="library" name="reflection-2.1.5" level="project" />
+    <orderEntry type="library" name="type-equality-1" level="project" />
+    <orderEntry type="library" name="deriving-aeson-0.2.5" level="project" />
   </component>
 </module>

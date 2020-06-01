@@ -1,5 +1,6 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeOperators #-}
 
@@ -13,6 +14,7 @@ import Data.Aeson (FromJSON, ToJSON)
 import Data.Proxy (Proxy (..))
 import Data.Text (Text)
 import Database.PostgreSQL.LibPQ (Connection)
+import Deriving.Aeson.Stock
 import GHC.Generics
 import Hasql.Connection ()
 import Network.Wai (Application)
@@ -21,13 +23,13 @@ import Servant.API.Generic ((:-), ToServantApi, genericApi)
 import Servant.Server (Server, serve)
 import Servant.Server.Generic (AsServer, genericServe, genericServer)
 
-data Node = Node {nodeId :: Int, nodeLabel :: Text} deriving (Generic)
+data Node = Node {nodeId :: Int, nodeLabel :: Text}
+  deriving (Generic)
+  deriving (FromJSON, ToJSON) via PrefixedSnake "node" Node
 
-instance ToJSON Node
-
-data NodeReq = NodeReq {nrLabel :: Text} deriving (Generic)
-
-instance FromJSON NodeReq
+data NodeReq = NodeReq {nrLabel :: Text}
+  deriving (Generic)
+  deriving (FromJSON, ToJSON) via PrefixedSnake "nr" NodeReq
 
 type API = "graph" :> GraphAPI
 
@@ -65,7 +67,7 @@ server conn = genericServer nodeAPI :<|> genericServer linkAPI
           neighbours = \_id -> return [Node 14 "Hurr", Node 15 "Durr"]
         }
     linkAPI :: LinkAPI AsServer
-    linkAPI = LinkAPI {new = (\fro to -> return NoContent)}
+    linkAPI = LinkAPI {new = \fro to -> return NoContent}
 
 api :: Proxy API
 api = Proxy
