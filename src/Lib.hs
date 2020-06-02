@@ -11,19 +11,17 @@ module Lib
 where
 
 import Control.Lens ((&), (.~), (?~), mapped)
-import Data.Aeson (FromJSON, ToJSON, toJSON)
-import qualified Data.Aeson as Aeson (Value (..))
+import Data.Aeson (toJSON)
 import Data.Proxy (Proxy (..))
-import Data.Swagger (NamedSchema (..), Swagger (..), SwaggerItems (..), SwaggerType (..), ToSchema (..), defaultSchemaOptions, description, example, genericDeclareNamedSchema, info, items, schema, title, type_, version)
+import Data.Swagger (Swagger (..), ToSchema (..), defaultSchemaOptions, description, example, genericDeclareNamedSchema, info, schema, title, version)
 import Data.Text (Text)
 import Data.Typeable (Typeable)
 import Database.PostgreSQL.LibPQ (Connection)
 import Deriving.Aeson.Stock
-import GHC.Generics
 import Hasql.Connection ()
 import Network.Wai (Application)
-import Servant.API ((:<|>) (..), (:<|>), (:>), Accept, Capture, Delete, DeleteNoContent, Get, JSON, NoContent (..), PlainText, Put, PutNoContent, ReqBody)
-import Servant.API.Generic ((:-), ToServantApi, genericApi)
+import Servant.API ((:<|>) (..), (:<|>), (:>), Capture, DeleteNoContent, Get, JSON, NoContent (..), PlainText, Put, PutNoContent, ReqBody)
+import Servant.API.Generic ((:-), ToServantApi)
 import Servant.Server (Server, serve)
 import Servant.Server.Generic (AsServer, genericServer)
 import Servant.Swagger (toSwagger)
@@ -79,8 +77,8 @@ graphSwagger =
     & info . description ?~ "An undirected graph manipulation API"
 
 server :: Connection -> Server API
-server conn =
-  swaggerSchemaUIServer graphSwagger 
+server _conn =
+  swaggerSchemaUIServer graphSwagger
     :<|> return graphSwagger
     :<|> genericServer nodeAPI
     :<|> genericServer linkAPI
@@ -95,7 +93,7 @@ server conn =
           neighbours = \_id -> return [Node 14 "Hurr", Node 15 "Durr"]
         }
     linkAPI :: LinkAPI AsServer
-    linkAPI = LinkAPI {new = \fro to -> return NoContent}
+    linkAPI = LinkAPI {new = \_fro _to -> return NoContent}
 
 api :: Proxy API
 api = Proxy
