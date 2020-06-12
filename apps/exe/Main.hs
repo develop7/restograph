@@ -2,12 +2,12 @@ module Main where
 
 import Data.ByteString.Char8 (pack)
 import Data.Maybe (fromMaybe)
-import Database.PostgreSQL.LibPQ (connectdb)
 import Lib
 import Network.Wai (Middleware)
 import Network.Wai.Handler.Warp (run)
 import Network.Wai.Middleware.RequestLogger (logStdoutDev)
 import System.Environment (lookupEnv)
+import Hasql.Pool (acquire)
 
 main :: IO ()
 main = do
@@ -22,6 +22,6 @@ main = do
 
 runApp :: Int -> String -> Middleware -> IO ()
 runApp port pgURI middleware = do
-  conn <- connectdb $ pack pgURI
-  run port (middleware $ waiApp conn)
+  pool <- acquire (1, 1, pack pgURI)
+  run port (middleware $ waiApp pool)
   pure ()

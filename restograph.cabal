@@ -24,13 +24,19 @@ library
       Lib
   other-modules:
       Paths_restograph
+    , Restograph.Model
+    , Restograph.Database.Sessions
+    , Restograph.Database.Statements
   hs-source-dirs:
       src
   build-depends:
       base >=4.7 && <5
     , aeson
+    , bytestring
     , deriving-aeson
     , hasql
+    , hasql-th
+    , hasql-pool
     , lens
     , postgresql-libpq
     , servant
@@ -40,6 +46,7 @@ library
     , servant-swagger-ui
     , swagger2
     , text
+    , vector
     , wai
   default-language: Haskell2010
 
@@ -54,6 +61,7 @@ executable restograph-exe
       base >=4.7 && <5
     , restograph
     , bytestring
+    , hasql-pool
     , postgresql-libpq
     , text
     , wai

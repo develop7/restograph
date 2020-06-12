@@ -1,0 +1,20 @@
+### list nodes
+GET http://localhost:3000/graph/node/
+
+### create node
+PUT http://localhost:3000/graph/node/
+Content-Type: application/json
+
+{"label": "sfesfe"}
+
+### Delete node
+DELETE http://localhost:3000/graph/node/4/
+
+### Link nodes
+PUT http://localhost:3000/graph/link/3/5
+
+### rename node
+PUT http://localhost:3000/graph/node/3/label
+Content-Type: application/json
+
+{"label":  "hurr durr immasheep"}

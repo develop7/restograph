@@ -40,7 +40,14 @@ packages:
 #   commit: e7b331f14bcffb8367cd58fbfc8b40ec7642100a
 #
 extra-deps:
-  - deriving-aeson-0.2.5
+- deriving-aeson-0.2.5
+### hasql-th deps
+- hasql-th-0.4.0.8@sha256:e77af01c354fcebb0fc8358a4bb2f7b361329bce28f783d8d6b17fbd5fa43279,2245
+- postgresql-syntax-0.3.0.2@sha256:f676be8eaade863bd5ea0a3bd0a60c05e0bf0c324a0cb2e05355fe684b879418,4169
+- fast-builder-0.1.2.0@sha256:d01db8a5f1ac262e2db0375c47e46660c67ad4145bef64cc7303ade096e461ee,2801
+- headed-megaparsec-0.1.0.4@sha256:2888428f8cee84088b196639a2b5d7741d98caaeaa7a68662e54031f0dbf4655,1569
+- selective-0.4.1@sha256:7277b46df2352e0c416d12ad625db7990dd9bb0e1e0c909a442e2b29e67bef88,3573
+###/ hasql-th deps
 
 # Override default flag values for local packages and extra-deps
 # flags: {}

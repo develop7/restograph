@@ -1,9 +1,11 @@
 {-# LANGUAGE DataKinds #-}
-{-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingVia #-}
+{-# LANGUAGE GeneralisedNewtypeDeriving #-}
+{-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TypeOperators, GeneralisedNewtypeDeriving #-}
+{-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE TypeOperators #-}
 
 module Lib
   ( waiApp,
@@ -11,39 +13,40 @@ module Lib
 where
 
 import Control.Lens ((&), (.~), (?~), mapped)
+import Control.Monad.IO.Class (liftIO)
 import Data.Aeson (toJSON)
+import Data.ByteString.Lazy.Char8 (pack)
+import Data.Int (Int32)
 import Data.Proxy (Proxy (..))
-import Data.Swagger (Swagger (..), ToSchema (..), defaultSchemaOptions, description, example, genericDeclareNamedSchema, info, schema, title, version, ToParamSchema)
-import Data.Text (Text)
+import Data.Swagger (Swagger (..), ToParamSchema, ToSchema (..), defaultSchemaOptions, description, example, genericDeclareNamedSchema, info, schema, title, version)
 import Database.PostgreSQL.LibPQ (Connection)
 import Deriving.Aeson.Stock
-import Hasql.Connection ()
+import Hasql.Connection (Settings, withLibPQConnection)
+import Hasql.Pool (Pool, acquire, use)
+import Hasql.Session (run)
 import Network.Wai (Application)
-import Servant.API ((:<|>) (..), (:<|>), (:>), Capture, DeleteNoContent, Get, JSON, NoContent (..), PlainText, Put, PutNoContent, ReqBody, FromHttpApiData)
+import Restograph.Database.Sessions
+import Restograph.Model (Node (..), NodeId (..), NodeReq (..))
+import Servant (throwError)
+import Servant.API ((:<|>) (..), (:<|>), (:>), Capture, DeleteNoContent, FromHttpApiData, Get, JSON, NoContent (..), PlainText, Put, PutNoContent, ReqBody)
 import Servant.API.Generic ((:-), ToServantApi)
-import Servant.Server (Server, serve)
+import Servant.Server (Handler, Server, err404, err412, err500, errBody, serve)
 import Servant.Server.Generic (AsServer, genericServer)
 import Servant.Swagger (toSwagger)
 import Servant.Swagger.UI (SwaggerSchemaUI, swaggerSchemaUIServer)
+import Data.Vector (toList)
 
-newtype NodeId = NodeId Int deriving (Generic, ToJSON, FromJSON, FromHttpApiData)
+deriving instance FromHttpApiData NodeId
 
 instance ToParamSchema NodeId
-instance ToSchema NodeId
 
-data Node = Node {nodeId :: NodeId, nodeLabel :: Text}
-  deriving (Generic)
-  deriving (FromJSON, ToJSON) via PrefixedSnake "node" Node
+instance ToSchema NodeId
 
 instance ToSchema Node where
   declareNamedSchema proxy =
     genericDeclareNamedSchema defaultSchemaOptions proxy
       & mapped . schema . description ?~ "Graph node"
       & mapped . schema . example ?~ toJSON (Node (NodeId 42) "answer")
-
-data NodeReq = NodeReq {nrLabel :: Text}
-  deriving (Generic)
-  deriving (FromJSON, ToJSON) via PrefixedSnake "nr" NodeReq
 
 instance ToSchema NodeReq where
   declareNamedSchema proxy =
@@ -57,9 +60,9 @@ type GraphAPI = "graph" :> ("node" :> ToServantApi NodeAPI :<|> "link" :> ToServ
 
 data NodeAPI r
   = NodeAPI
-      { create :: r :- ReqBody '[JSON] NodeReq :> Put '[JSON] Node,
+      { create :: r :- ReqBody '[JSON] NodeReq :> Put '[JSON] Int32,
         delete :: r :- Capture "id" NodeId :> DeleteNoContent '[PlainText] NoContent,
-        rename :: r :- Capture "id " NodeId :> "label" :> ReqBody '[JSON] NodeReq :> Put '[JSON] Node,
+        rename :: r :- Capture "id " NodeId :> "label" :> ReqBody '[JSON] NodeReq :> Put '[JSON] NoContent,
         neighbours :: r :- Capture "id " NodeId :> "neighbours" :> Get '[JSON] [Node],
         list :: r :- Get '[JSON] [Node]
       }
@@ -80,8 +83,8 @@ graphSwagger =
     & info . version .~ "0.1"
     & info . description ?~ "An undirected graph manipulation API"
 
-server :: Connection -> Server API
-server _conn =
+server :: Pool -> Server API
+server pool =
   swaggerSchemaUIServer graphSwagger
     :<|> return graphSwagger
     :<|> genericServer nodeAPI
@@ -90,18 +93,65 @@ server _conn =
     nodeAPI :: NodeAPI AsServer
     nodeAPI =
       NodeAPI
-        { list = return [Node {nodeId = NodeId 10, nodeLabel = "wat"}],
-          create = \NodeReq {nrLabel = nl} -> return $ Node {nodeId = NodeId 100, nodeLabel = nl},
-          delete = \_id -> return NoContent,
-          rename = \_id NodeReq {nrLabel = nl} -> return $ Node {nodeId = NodeId 42, nodeLabel = nl},
-          neighbours = \_id -> return [Node (NodeId 14) "Hurr", Node (NodeId 15) "Durr"]
+        { list,
+          create,
+          delete,
+          rename,
+          neighbours
         }
+    list :: Handler [Node]
+    list = do
+      result <- liftIO $ use pool listNodes
+      case result of
+        Right nodes -> return nodes
+        Left _e -> throwError err500
+    create :: NodeReq -> Handler Int32
+    create NodeReq {nrLabel} = do
+      result <- liftIO $ use pool $ createNode nrLabel
+      case result of
+        Right mnid ->
+          case mnid of
+            Just nid -> return nid
+            Nothing -> throwError err500
+        Left _e -> throwError err500
+    delete :: NodeId -> Handler NoContent
+    delete (NodeId nid) = do
+      result <- liftIO $ use pool $ deleteNode nid
+      case result of
+        Right r ->
+          if r
+            then return NoContent
+            else throwError $ err404 {errBody = pack $ "Couldn't find node with ID = " ++ show nid}
+        Left _e -> throwError err500
+    rename :: NodeId -> NodeReq -> Handler NoContent
+    rename (NodeId nid) NodeReq {nrLabel} = do
+      result <- liftIO $ use pool $ renameNode nid nrLabel
+      case result of
+        Right r ->
+          if r
+            then return NoContent
+            else throwError err404 {errBody = pack $ "Couldn't find node with ID = " ++ show nid}
+        Left _e -> throwError err500
+    neighbours :: NodeId -> Handler [Node]
+    neighbours (NodeId nid) = do
+      result <- liftIO $ use pool $ listNodeNeighbors nid
+      case result of 
+        Right nodes -> return $ toList nodes
+        Left _e -> throwError err500
     linkAPI :: LinkAPI AsServer
-    linkAPI = LinkAPI {new = \_fro _to -> return NoContent}
+    linkAPI = LinkAPI {new}
+    new :: NodeId -> NodeId -> Handler NoContent
+    new (NodeId fro) (NodeId to)
+      | fro == to = throwError (err412 {errBody = "Cannot link node to itself"})
+      | otherwise = do
+        result <- liftIO $ use pool $ linkNodes fro to
+        case result of
+          Right r -> if r then return NoContent else throwError $ err404 {errBody = "Couldn't find requested node"}
+          Left _e -> throwError err500
 
 api :: Proxy API
 api = Proxy
 
-waiApp :: Connection -> Application
-waiApp conn = do
-  serve api $ server conn
+waiApp :: Pool -> Application
+waiApp pool = do
+  serve api $ server pool
