@@ -19,6 +19,7 @@ import Data.ByteString.Lazy.Char8 (pack)
 import Data.Int (Int32)
 import Data.Proxy (Proxy (..))
 import Data.Swagger (Swagger (..), ToParamSchema, ToSchema (..), defaultSchemaOptions, description, example, genericDeclareNamedSchema, info, schema, title, version)
+import Data.Vector (toList)
 import Database.PostgreSQL.LibPQ (Connection)
 import Deriving.Aeson.Stock
 import Hasql.Connection (Settings, withLibPQConnection)
@@ -28,13 +29,12 @@ import Network.Wai (Application)
 import Restograph.Database.Sessions
 import Restograph.Model (Node (..), NodeId (..), NodeReq (..))
 import Servant (throwError)
-import Servant.API ((:<|>) (..), (:<|>), (:>), Capture, DeleteNoContent, FromHttpApiData, Get, JSON, NoContent (..), PlainText, Put, PutNoContent, ReqBody)
+import Servant.API ((:<|>) (..), (:<|>), (:>), Capture, DeleteNoContent, Description, FromHttpApiData, Get, JSON, NoContent (..), PlainText, Put, PutNoContent, ReqBody, Summary)
 import Servant.API.Generic ((:-), ToServantApi)
 import Servant.Server (Handler, Server, err404, err412, err500, errBody, serve)
 import Servant.Server.Generic (AsServer, genericServer)
 import Servant.Swagger (toSwagger)
 import Servant.Swagger.UI (SwaggerSchemaUI, swaggerSchemaUIServer)
-import Data.Vector (toList)
 
 deriving instance FromHttpApiData NodeId
 
@@ -60,17 +60,38 @@ type GraphAPI = "graph" :> ("node" :> ToServantApi NodeAPI :<|> "link" :> ToServ
 
 data NodeAPI r
   = NodeAPI
-      { create :: r :- ReqBody '[JSON] NodeReq :> Put '[JSON] Int32,
-        delete :: r :- Capture "id" NodeId :> DeleteNoContent '[PlainText] NoContent,
-        rename :: r :- Capture "id " NodeId :> "label" :> ReqBody '[JSON] NodeReq :> Put '[JSON] NoContent,
-        neighbours :: r :- Capture "id " NodeId :> "neighbours" :> Get '[JSON] [Node],
-        list :: r :- Get '[JSON] [Node]
+      { create ::
+          r :- Summary "Create a graph node"
+            :> ReqBody '[JSON] NodeReq
+            :> Put '[JSON] Int32,
+        delete ::
+          r :- Summary "Delete a node"
+            :> Capture "id" NodeId
+            :> DeleteNoContent '[PlainText] NoContent,
+        rename ::
+          r :- Summary "Change node label"
+            :> Capture "id " NodeId
+            :> "label"
+            :> ReqBody '[JSON] NodeReq
+            :> Put '[JSON] NoContent,
+        neighbours ::
+          r :- Summary "List node neighbours"
+            :> Capture "id " NodeId
+            :> "neighbours"
+            :> Get '[JSON] [Node],
+        list ::
+          r :- Summary "List all nodes"
+            :> Get '[JSON] [Node]
       }
   deriving (Generic)
 
 data LinkAPI r
   = LinkAPI
-      { new :: r :- Capture "id_from" NodeId :> Capture "id_to" NodeId :> PutNoContent '[JSON] NoContent
+      { new ::
+          r :- Summary "Link two nodes"
+            :> Capture "id_from" NodeId
+            :> Capture "id_to" NodeId
+            :> PutNoContent '[JSON] NoContent
       }
   deriving (Generic)
 
@@ -135,7 +156,7 @@ server pool =
     neighbours :: NodeId -> Handler [Node]
     neighbours (NodeId nid) = do
       result <- liftIO $ use pool $ listNodeNeighbors nid
-      case result of 
+      case result of
         Right nodes -> return $ toList nodes
         Left _e -> throwError err500
     linkAPI :: LinkAPI AsServer
