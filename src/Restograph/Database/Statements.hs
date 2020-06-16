@@ -28,6 +28,7 @@ renameNode =
 
 linkNodes :: Statement (Int32, Int32) Int64
 linkNodes =
+  -- ordering IDs to match the order of unique index
   [rowsAffectedStatement|
     INSERT INTO "links"
     VALUES (greatest($1 :: INT4, $2 :: INT4), least($1 :: INT4, $2 :: INT4))
@@ -35,7 +36,6 @@ linkNodes =
 
 listNodes :: Statement () (Vector (Int32, Text))
 listNodes =
-  -- ordering IDs to match the order of unique index
   [vectorStatement|
     SELECT "id" :: int4, "label" :: text FROM "nodes"
     |]
